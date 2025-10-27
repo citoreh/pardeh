@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Movie Gallery</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e1e1e 0%, #2d2d2d 100%);
+            color: #fff;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 40px;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+
+        .gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 30px;
+            padding: 20px 0;
+        }
+
+        .movie-card {
+            position: relative;
+            background: #333;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.3);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            cursor: pointer;
+        }
+
+        .movie-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 12px 24px rgba(0,0,0,0.5);
+        }
+
+        .poster-container {
+            position: relative;
+            width: 100%;
+            padding-top: 150%; /* 2:3 aspect ratio */
+            overflow: hidden;
+            background: #222;
+        }
+
+        .poster-container img {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .play-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .movie-card:hover .play-overlay {
+            opacity: 1;
+        }
+
+        .play-icon {
+            width: 80px;
+            height: 80px;
+            background: rgba(255,255,255,0.9);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.3s ease;
+        }
+
+        .movie-card:hover .play-icon {
+            transform: scale(1.1);
+        }
+
+        .play-icon::after {
+            content: '';
+            width: 0;
+            height: 0;
+            border-left: 25px solid #333;
+            border-top: 15px solid transparent;
+            border-bottom: 15px solid transparent;
+            margin-left: 5px;
+        }
+
+        .movie-info {
+            padding: 15px;
+            background: #2a2a2a;
+        }
+
+        .movie-title {
+            font-size: 1.1em;
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: #fff;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .movie-director {
+            font-size: 0.9em;
+            color: #aaa;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        /* Fullscreen Overlay */
+        .video-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.95);
+            z-index: 9999;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .video-overlay.active {
+            display: flex;
+        }
+
+        .video-container {
+            position: relative;
+            width: 90%;
+            height: 90%;
+            max-width: 1600px;
+            background: #000;
+        }
+
+        .video-container video {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .video-container iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        .player-selector {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(40, 40, 40, 0.98);
+            padding: 40px;
+            border-radius: 15px;
+            text-align: center;
+            max-width: 500px;
+            width: 90%;
+        }
+
+        .player-selector h2 {
+            margin-bottom: 20px;
+            color: #fff;
+        }
+
+        .player-selector p {
+            color: #aaa;
+            margin-bottom: 30px;
+            line-height: 1.6;
+        }
+
+        .player-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .player-select-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            color: white;
+            padding: 15px 30px;
+            border-radius: 30px;
+            cursor: pointer;
+            font-size: 1.1em;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            font-weight: 600;
+        }
+
+        .player-select-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .player-select-btn.secondary {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+
+        .player-select-btn.secondary:hover {
+            box-shadow: 0 8px 20px rgba(245, 87, 108, 0.4);
+        }
+
+        .player-select-btn.tertiary {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+
+        .player-select-btn.tertiary:hover {
+            box-shadow: 0 8px 20px rgba(79, 172, 254, 0.4);
+        }
+
+        .close-btn {
+            position: absolute;
+            top: -50px;
+            right: 0;
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            font-size: 2em;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: background 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .close-btn:hover {
+            background: rgba(255,255,255,0.3);
+        }
+
+        .player-options {
+            position: absolute;
+            top: -50px;
+            left: 0;
+            display: flex;
+            gap: 10px;
+        }
+
+        .player-btn {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: background 0.3s ease;
+        }
+
+        .player-btn:hover {
+            background: rgba(255,255,255,0.3);
+        }
+
+        .error-message {
+            color: #ff6b6b;
+            text-align: center;
+            padding: 20px;
+            font-size: 1.1em;
+        }
+
+        .error-actions {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .action-btn {
+            background: #4CAF50;
+            border: none;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: background 0.3s ease;
+        }
+
+        .action-btn:hover {
+            background: #45a049;
+        }
+
+        .action-btn.secondary {
+            background: #2196F3;
+        }
+
+        .action-btn.secondary:hover {
+            background: #0b7dda;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            font-size: 1.2em;
+            color: #aaa;
+        }
+
+        @media (max-width: 768px) {
+            .gallery {
+                grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+                gap: 15px;
+            }
+
+            h1 {
+                font-size: 1.8em;
+            }
+
+            .play-icon {
+                width: 60px;
+                height: 60px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎬 Movie Gallery</h1>
+        <div id="gallery" class="gallery">
+            <div class="loading">Loading movies...</div>
+        </div>
+    </div>
+
+    <!-- Video Overlay -->
+    <div id="videoOverlay" class="video-overlay">
+        <div class="video-container">
+            <button class="close-btn" onclick="closeVideo()">&times;</button>
+            
+            <!-- Player Selection Screen -->
+            <div id="playerSelector" class="player-selector">
+                <h2>Choose How to Play</h2>
+                <p>This video requires an external player due to server restrictions.</p>
+                <div class="player-buttons">
+                    <button class="player-select-btn" onclick="openInVLC()">
+                        🎬 Open in VLC Player
+                    </button>
+                    <button class="player-select-btn secondary" onclick="tryDirectLink()">
+                        🔗 Open Direct Link
+                    </button>
+                    <button class="player-select-btn tertiary" onclick="copyVideoUrl()">
+                        📋 Copy URL
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQMHEoIUcCfJmnBkmRUdXGq6T-ITnudqzoW8R7Jv74nbDhIGDXG3ORbYaOVqsEY81GgDzLEf_TDM1f6/pub?output=csv';
+        let currentVideoUrl = '';
+
+        // Parse CSV data
+        function parseCSV(text) {
+            const lines = text.split('\n');
+            const headers = lines[0].split(',').map(h => h.trim());
+            const movies = [];
+
+            for (let i = 1; i < lines.length; i++) {
+                if (lines[i].trim() === '') continue;
+                
+                const values = lines[i].split(',').map(v => v.trim());
+                if (values.length >= 4) {
+                    movies.push({
+                        title: values[0],
+                        director: values[1],
+                        img: values[2],
+                        url: values[3]
+                    });
+                }
+            }
+            return movies;
+        }
+
+        // Load and display movies
+        async function loadMovies() {
+            try {
+                const response = await fetch(CSV_URL);
+                const text = await response.text();
+                const movies = parseCSV(text);
+                
+                const gallery = document.getElementById('gallery');
+                gallery.innerHTML = '';
+
+                movies.forEach(movie => {
+                    const card = document.createElement('div');
+                    card.className = 'movie-card';
+                    card.onclick = () => playVideo(movie.url);
+
+                    card.innerHTML = `
+                        <div class="poster-container">
+                            <img src="${movie.img}" alt="${movie.title}" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22200%22 height=%22300%22%3E%3Crect width=%22200%22 height=%22300%22 fill=%22%23444%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 font-size=%2220%22 fill=%22%23888%22 text-anchor=%22middle%22 dy=%22.3em%22%3ENo Image%3C/text%3E%3C/svg%3E'">
+                            <div class="play-overlay">
+                                <div class="play-icon"></div>
+                            </div>
+                        </div>
+                        <div class="movie-info">
+                            <div class="movie-title">${movie.title}</div>
+                            <div class="movie-director">${movie.director}</div>
+                        </div>
+                    `;
+
+                    gallery.appendChild(card);
+                });
+
+                if (movies.length === 0) {
+                    gallery.innerHTML = '<div class="loading">No movies found</div>';
+                }
+            } catch (error) {
+                console.error('Error loading movies:', error);
+                document.getElementById('gallery').innerHTML = '<div class="loading">Error loading movies</div>';
+            }
+        }
+
+        // Play video in overlay
+        function playVideo(url) {
+            currentVideoUrl = url;
+            const overlay = document.getElementById('videoOverlay');
+            overlay.classList.add('active');
+        }
+
+        // Close video overlay
+        function closeVideo() {
+            const overlay = document.getElementById('videoOverlay');
+            overlay.classList.remove('active');
+        }
+
+        // Open in VLC
+        function openInVLC() {
+            if (currentVideoUrl) {
+                // Try VLC protocol
+                const vlcUrl = `vlc://${currentVideoUrl}`;
+                window.location.href = vlcUrl;
+                
+                // Also show instructions
+                setTimeout(() => {
+                    alert('VLC should open automatically.\n\nIf not:\n1. Open VLC Media Player\n2. Press Ctrl+N (or Cmd+N on Mac)\n3. Paste: ' + currentVideoUrl);
+                }, 1000);
+            }
+        }
+
+        // Try opening direct link in new tab
+        function tryDirectLink() {
+            if (currentVideoUrl) {
+                window.open(currentVideoUrl, '_blank');
+            }
+        }
+
+        // Copy video URL to clipboard
+        function copyVideoUrl() {
+            if (currentVideoUrl) {
+                navigator.clipboard.writeText(currentVideoUrl).then(() => {
+                    alert('✅ URL copied!\n\n' + currentVideoUrl + '\n\nPaste it into:\n• VLC (Ctrl+N)\n• Any media player\n• Download manager');
+                }).catch(() => {
+                    prompt('Copy this URL:', currentVideoUrl);
+                });
+            }
+        }
+
+        // Close on Escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeVideo();
+            }
+        });
+
+        // Load movies on page load
+        loadMovies();
+    </script>
+</body>
+</html>
