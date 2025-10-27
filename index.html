@@ -1,9 +1,12 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fa" dir="rtl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Movie Gallery</title>
+    <title>گالری فیلم</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         * {
             margin: 0;
@@ -12,11 +15,12 @@
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Vazirmatn', sans-serif;
             background: linear-gradient(135deg, #1e1e1e 0%, #2d2d2d 100%);
             color: #fff;
             padding: 20px;
             min-height: 100vh;
+            direction: rtl;
         }
 
         .container {
@@ -38,31 +42,35 @@
             padding: 25px;
             margin: 0 auto 40px;
             max-width: 800px;
-            text-align: center;
+            text-align: right;
+            direction: rtl;
         }
 
         .instructions h3 {
             color: #fff;
             margin-bottom: 15px;
             font-size: 1.3em;
+            text-align: center;
         }
 
         .instructions ol {
-            text-align: left;
-            display: inline-block;
+            text-align: right;
             margin: 15px 0;
-            padding-left: 20px;
+            padding-right: 25px;
+            padding-left: 0;
         }
 
         .instructions li {
             color: #ddd;
             margin: 10px 0;
-            line-height: 1.6;
+            line-height: 1.8;
             font-size: 1.05em;
+            text-align: right;
         }
 
         .instructions strong {
             color: #a78bfa;
+            font-weight: 600;
         }
 
         .gallery {
@@ -176,21 +184,21 @@
 </head>
 <body>
     <div class="container">
-        <h1>🎬 Movie Gallery</h1>
+        <h1>🎬 گالری فیلم</h1>
         
         <div class="instructions">
-            <h3>📺 How to Watch</h3>
+            <h3>📺 راهنمای تماشا</h3>
             <ol>
-                <li>Click <strong>"Copy URL"</strong> button on any movie below</li>
-                <li>Open <strong>VLC Media Player</strong> on your device</li>
-                <li>Go to <strong>Media → Open Network Stream</strong> (or press <strong>Ctrl+N</strong>)</li>
-                <li>Paste the copied URL and click <strong>Play</strong></li>
-                <li>Enjoy your movie! 🍿</li>
+                <li>روی دکمه <strong>"کپی آدرس"</strong> فیلم مورد نظر کلیک کنید</li>
+                <li><strong>VLC Media Player</strong> را روی دستگاه خود باز کنید</li>
+                <li>به منوی <strong>Media → Open Network Stream</strong> بروید (یا کلید <strong>Ctrl+N</strong> را فشار دهید)</li>
+                <li>آدرس کپی شده را وارد کنید و روی <strong>Play</strong> کلیک کنید</li>
+                <li>از تماشای فیلم لذت ببرید! 🍿</li>
             </ol>
         </div>
 
         <div id="gallery" class="gallery">
-            <div class="loading">Loading movies...</div>
+            <div class="loading">در حال بارگذاری فیلم‌ها...</div>
         </div>
     </div>
 
@@ -224,7 +232,7 @@
             navigator.clipboard.writeText(url).then(() => {
                 // Change button text temporarily
                 const originalText = button.textContent;
-                button.textContent = '✅ Copied!';
+                button.textContent = '✅ کپی شد!';
                 button.style.background = 'linear-gradient(135deg, #10b981 0%, #059669 100%)';
                 
                 setTimeout(() => {
@@ -233,7 +241,7 @@
                 }, 2000);
             }).catch(() => {
                 // Fallback for older browsers
-                prompt('Copy this URL:', url);
+                prompt('این آدرس را کپی کنید:', url);
             });
         }
 
@@ -259,7 +267,7 @@
                             <div class="movie-title">${movie.title}</div>
                             <div class="movie-director">${movie.director}</div>
                             <button class="copy-url-btn" onclick="copyUrl('${movie.url}', this)">
-                                📋 Copy URL
+                                📋 کپی آدرس
                             </button>
                         </div>
                     `;
@@ -268,11 +276,11 @@
                 });
 
                 if (movies.length === 0) {
-                    gallery.innerHTML = '<div class="loading">No movies found</div>';
+                    gallery.innerHTML = '<div class="loading">فیلمی یافت نشد</div>';
                 }
             } catch (error) {
                 console.error('Error loading movies:', error);
-                document.getElementById('gallery').innerHTML = '<div class="loading">Error loading movies</div>';
+                document.getElementById('gallery').innerHTML = '<div class="loading">خطا در بارگذاری فیلم‌ها</div>';
             }
         }
 
