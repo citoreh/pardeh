@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Movie Gallery</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e1e1e 0%, #2d2d2d 100%);
+            color: #fff;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+
+        .instructions {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.2) 0%, rgba(118, 75, 162, 0.2) 100%);
+            border: 2px solid rgba(102, 126, 234, 0.3);
+            border-radius: 15px;
+            padding: 25px;
+            margin: 0 auto 40px;
+            max-width: 800px;
+            text-align: center;
+        }
+
+        .instructions h3 {
+            color: #fff;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+
+        .instructions ol {
+            text-align: left;
+            display: inline-block;
+            margin: 15px 0;
+            padding-left: 20px;
+        }
+
+        .instructions li {
+            color: #ddd;
+            margin: 10px 0;
+            line-height: 1.6;
+            font-size: 1.05em;
+        }
+
+        .instructions strong {
+            color: #a78bfa;
+        }
+
+        .gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 30px;
+            padding: 20px 0;
+        }
+
+        .movie-card {
+            position: relative;
+            background: #333;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.3);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            cursor: pointer;
+        }
+
+        .movie-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 12px 24px rgba(0,0,0,0.5);
+        }
+
+        .poster-container {
+            position: relative;
+            width: 100%;
+            padding-top: 150%; /* 2:3 aspect ratio */
+            overflow: hidden;
+            background: #222;
+        }
+
+        .poster-container img {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .movie-info {
+            padding: 15px;
+            background: #2a2a2a;
+        }
+
+        .movie-title {
+            font-size: 1.1em;
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: #fff;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .movie-director {
+            font-size: 0.9em;
+            color: #aaa;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .copy-url-btn {
+            margin-top: 10px;
+            width: 100%;
+            padding: 10px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-size: 0.9em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .copy-url-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .copy-url-btn:active {
+            transform: translateY(0);
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            font-size: 1.2em;
+            color: #aaa;
+        }
+
+        @media (max-width: 768px) {
+            .gallery {
+                grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+                gap: 15px;
+            }
+
+            h1 {
+                font-size: 1.8em;
+            }
+
+            .play-icon {
+                width: 60px;
+                height: 60px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎬 Movie Gallery</h1>
+        
+        <div class="instructions">
+            <h3>📺 How to Watch</h3>
+            <ol>
+                <li>Click <strong>"Copy URL"</strong> button on any movie below</li>
+                <li>Open <strong>VLC Media Player</strong> on your device</li>
+                <li>Go to <strong>Media → Open Network Stream</strong> (or press <strong>Ctrl+N</strong>)</li>
+                <li>Paste the copied URL and click <strong>Play</strong></li>
+                <li>Enjoy your movie! 🍿</li>
+            </ol>
+        </div>
+
+        <div id="gallery" class="gallery">
+            <div class="loading">Loading movies...</div>
+        </div>
+    </div>
+
+    <script>
+        const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQMHEoIUcCfJmnBkmRUdXGq6T-ITnudqzoW8R7Jv74nbDhIGDXG3ORbYaOVqsEY81GgDzLEf_TDM1f6/pub?output=csv';
+
+        // Parse CSV data
+        function parseCSV(text) {
+            const lines = text.split('\n');
+            const headers = lines[0].split(',').map(h => h.trim());
+            const movies = [];
+
+            for (let i = 1; i < lines.length; i++) {
+                if (lines[i].trim() === '') continue;
+                
+                const values = lines[i].split(',').map(v => v.trim());
+                if (values.length >= 4) {
+                    movies.push({
+                        title: values[0],
+                        director: values[1],
+                        img: values[2],
+                        url: values[3]
+                    });
+                }
+            }
+            return movies;
+        }
+
+        // Copy URL to clipboard
+        function copyUrl(url, button) {
+            navigator.clipboard.writeText(url).then(() => {
+                // Change button text temporarily
+                const originalText = button.textContent;
+                button.textContent = '✅ Copied!';
+                button.style.background = 'linear-gradient(135deg, #10b981 0%, #059669 100%)';
+                
+                setTimeout(() => {
+                    button.textContent = originalText;
+                    button.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+                }, 2000);
+            }).catch(() => {
+                // Fallback for older browsers
+                prompt('Copy this URL:', url);
+            });
+        }
+
+        // Load and display movies
+        async function loadMovies() {
+            try {
+                const response = await fetch(CSV_URL);
+                const text = await response.text();
+                const movies = parseCSV(text);
+                
+                const gallery = document.getElementById('gallery');
+                gallery.innerHTML = '';
+
+                movies.forEach(movie => {
+                    const card = document.createElement('div');
+                    card.className = 'movie-card';
+
+                    card.innerHTML = `
+                        <div class="poster-container">
+                            <img src="${movie.img}" alt="${movie.title}" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22200%22 height=%22300%22%3E%3Crect width=%22200%22 height=%22300%22 fill=%22%23444%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 font-size=%2220%22 fill=%22%23888%22 text-anchor=%22middle%22 dy=%22.3em%22%3ENo Image%3C/text%3E%3C/svg%3E'">
+                        </div>
+                        <div class="movie-info">
+                            <div class="movie-title">${movie.title}</div>
+                            <div class="movie-director">${movie.director}</div>
+                            <button class="copy-url-btn" onclick="copyUrl('${movie.url}', this)">
+                                📋 Copy URL
+                            </button>
+                        </div>
+                    `;
+
+                    gallery.appendChild(card);
+                });
+
+                if (movies.length === 0) {
+                    gallery.innerHTML = '<div class="loading">No movies found</div>';
+                }
+            } catch (error) {
+                console.error('Error loading movies:', error);
+                document.getElementById('gallery').innerHTML = '<div class="loading">Error loading movies</div>';
+            }
+        }
+
+        // Load movies on page load
+        loadMovies();
+    </script>
+</body>
+</html>
